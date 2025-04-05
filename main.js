@@ -1,7 +1,6 @@
-/* translate.js - Обновленная логика DeepL Free API */
 const axios = require('axios').default;
 const zlib = require('zlib');
-const brotli = require('brotli'); // Потребуется установка: npm install brotli
+const brotli = require('brotli');
 
 const DEEPL_BASE_URL = 'https://www2.deepl.com/jsonrpc';
 
@@ -10,7 +9,7 @@ function getICount(translateText) {
 }
 
 function getRandomNumber() {
-  const src = crypto.getRandomValues(new Uint32Array(1))[0]; // Более безопасный способ генерации случайных чисел в браузере и Node.js
+  const src = crypto.getRandomValues(new Uint32Array(1))[0];
   return (src % 99999 + 8300000) * 1000;
 }
 
@@ -66,8 +65,8 @@ async function makeRequest(postData, dlSession = '', proxy = '') {
     url: urlFull,
     headers: headers,
     data: postStr,
-    responseType: 'arraybuffer', // Важно для обработки сжатия
-    decompress: false, // Отключаем автоматическую декомпрессию axios
+    responseType: 'arraybuffer',
+    decompress: false,
     validateStatus: function (status) {
       return status >= 200 && status < 500;
     },
@@ -89,11 +88,11 @@ async function makeRequest(postData, dlSession = '', proxy = '') {
     let data;
     const encoding = response.headers['content-encoding'];
     if (encoding === 'br') {
-      data = brotli.decompress(response.data).toString('utf-8'); // Используем brotli.decompress
+      data = brotli.decompress(response.data).toString('utf-8');
     } else if (encoding === 'gzip') {
       data = zlib.gunzipSync(response.data).toString('utf-8');
     } else if (encoding === 'deflate') {
-      data = zlib.inflateRawSync(response.data).toString('utf-8'); // Для deflate raw
+      data = zlib.inflateRawSync(response.data).toString('utf-8');
     }
     else {
       data = response.data.toString('utf-8');
@@ -115,7 +114,7 @@ async function translate(
   text,
   sourceLang = 'auto',
   targetLang = 'RU',
-  tagHandling = 'plaintext', // Значение по умолчанию 'plaintext'
+  tagHandling = 'plaintext',
   dlSession = '',
   proxy = ''
 ) {
@@ -123,12 +122,11 @@ async function translate(
     throw new Error('Нет текста для перевода.');
   }
 
-  // **Убедимся, что tagHandling всегда имеет значение, если не передано**
   if (!tagHandling) {
-    tagHandling = 'plaintext'; // Явно устанавливаем значение по умолчанию, если tagHandling пустой/undefined
+    tagHandling = 'plaintext';
   }
 
-  const textParts = text.split('\n'); // Разделение текста на части по новой строке
+  const textParts = text.split('\n');
   const translatedParts = [];
   const allAlternatives = [];
 
@@ -141,8 +139,7 @@ async function translate(
 
     let currentSourceLang = sourceLang;
     if (sourceLang === 'auto' || sourceLang === '') {
-        // В JS версии пока не определяем язык, оставляем 'auto' для DeepL
-        currentSourceLang = 'auto';
+      currentSourceLang = 'auto';
     }
 
     const jobs = [];
@@ -179,7 +176,7 @@ async function translate(
           formality: 'undefined',
           transcribeAs: 'romanize',
           advancedMode: false,
-          textType: tagHandling, // Теперь tagHandling гарантированно имеет значение
+          textType: tagHandling,
           wasSpoken: false,
         },
         lang: {
@@ -257,10 +254,9 @@ async function translate(
     combinedAlternatives.push(altParts.join('\n'));
   }
 
-
   const result = {
     code: 200,
-    id: getRandomNumber(), // New ID for complete translation
+    id: getRandomNumber(),
     data: translatedText,
     alternatives: combinedAlternatives,
     source_lang: sourceLang,
